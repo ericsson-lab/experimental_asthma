@@ -4,6 +4,7 @@ library(tidyr)
 library(vegan)
 library(cowplot)
 library(ggpubr)
+library(dplyr)
 
 ## Read in metadata and table
 metadata <- read.delim("data/metadata.txt") %>% 
@@ -22,7 +23,7 @@ rownames(table) <- paste("ASV", table$ASV, sep = "")
 metadata
 
 alpha_metrics <- table %>% 
-  select(-c(ASV,featureid)) %>% 
+  dplyr::select(-c(ASV,featureid)) %>% 
   rownames_to_column(var = "ASV") %>% 
   pivot_longer(-ASV,
                names_to = "sampleid",
@@ -36,21 +37,21 @@ alpha_metrics <- table %>%
   
   mutate(simpson = diversity(counts, 
                              index = "simpson")) %>% 
-  select(-c(ASV, counts)) %>% 
+  dplyr::select(-c(ASV, counts)) %>% 
   pivot_longer(-sampleid, names_to = "alpha_metric", values_to = "value") %>% 
-  left_join(metadata, .) %>% 
-  select(-c(Count, Cat))
+  left_join(metadata, .)
 
 
 alpha.sum.stats <- alpha_metrics %>% 
-  group_by(Time_Point, alpha_metric) %>% 
+  group_by(Time_Point, alpha_metric, Sample) %>% 
   summarize(min = min(value),
             q1 = quantile(value, 0.25),
             median = median(value),
             mean = mean(value),
             q3 = quantile(value, 0.75),
             max = max(value),
-            sd = sd(value))
+            sd = sd(value)) %>% 
+  arrange(alpha_metric, Sample)
 
 write.csv(alpha.sum.stats, "data/alpha_summary_stats.csv",
           row.names = F)
