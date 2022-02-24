@@ -6,6 +6,9 @@ library(dplyr)
 library(plyr)
 library(vegan) #2.5-7
 library(ape)
+library(scales)
+library(ggthemes)
+library(EcolUtils)
 
 set.seed(1851)
 permutations = 9999
@@ -22,7 +25,13 @@ rownames(orig.table) <- orig.table$featureid
 metadata.filtered <- metadata %>% 
   filter(Time_Point == 0 |
            Time_Point == 6 |
-           Time_Point == 36)
+           Time_Point == 36) %>% 
+  mutate(Sample = case_when(Sample == "BAL" ~ "BALF",
+                            Sample == "OP" ~ "OP",
+                            Sample == "Fecal" ~ "Rectal"),
+         Time_Point = case_when(Time_Point == 0 ~ "Health",
+                                Time_Point == 6 ~ "Acute",
+                                Time_Point == 36 ~ "Chronic"))
 
 # Runs BC PCoA Analysis for plotting
 run_pcoa <- function(sample_type) {
@@ -70,8 +79,8 @@ run_pcoa <- function(sample_type) {
 }
  
 # Create pcoa plots for each sample location
-bal.pcoa <- run_pcoa("BAL")
-fecal.pcoa <- run_pcoa("Fecal")
+bal.pcoa <- run_pcoa("BALF")
+fecal.pcoa <- run_pcoa("Rectal")
 op.pcoa <- run_pcoa("OP")
 
 # Colors for plotting    
@@ -83,7 +92,7 @@ op.pcoa <- run_pcoa("OP")
 # brewer.pal(3,"Set2")[3]
 
 ## Colors used in following PCoA plot
-display.brewer.pal(3, "Set2")
+show_col(gdocs_pal()(3))
 bal.pcoa
 
 # Plot BC pcoa results
@@ -95,11 +104,12 @@ plot_pcoa <- function(pcoa_object, color) {
              color = as.factor(Time_Point))) +
   
   # Plots hulls for samples grouped by time
-  geom_polygon(data = pcoa_object[[2]],
-               aes(fill = as.factor(Time_Point),
-                   color = as.factor(Time_Point)),
-               alpha = 0.1,
-               show.legend = FALSE) +
+  # geom_polygon(data = pcoa_object[[2]],
+  #              aes(fill = as.factor(Time_Point),
+  #                  color = as.factor(Time_Point)),
+  #              alpha = 0.1,
+  #              show.legend = FALSE) +
+   stat_ellipse(show.legend = F) +
   
   # Plot points for each sample above convex hull
   geom_point(aes(shape = as.factor(Time_Point)),alpha = 0.9,
@@ -111,15 +121,15 @@ plot_pcoa <- function(pcoa_object, color) {
   
   # Changes point shapes to open symbols
   scale_shape_manual(values = c(0,1,2),
-                     labels = c("Healthy",
+                     labels = c("Health",
                                 "Acute",
                                 "Chronic"))+
   # Change color to match fig 1
-   scale_color_manual(values=c(rep(brewer.pal(3, "Set2")[color],3)),
-                      labels = c("Healthy",
+   scale_color_manual(values=c(rep(gdocs_pal()(3)[color],3)),
+                      labels = c("Health",
                                  "Acute",
                                  "Chronic")) +
-   scale_fill_manual(values=c(rep(brewer.pal(3, "Set2")[color],3))) +
+   scale_fill_manual(values=c(rep(gdocs_pal()(3)[color],3))) +
    
   theme_cowplot() +
   
@@ -142,9 +152,9 @@ op.plot <- plot_pcoa(op.pcoa, 3)
 leg <- get_legend(bal.plot + guides(shape = guide_legend(override.aes = list(color = "black",
                                                                              stroke = 1.05)) ))
 ## Plot pcoas together without legends.
-pcoa.plots <- plot_grid(fecal.plot + theme(legend.position = "none"),
-          op.plot + theme(legend.position = "none"),
+pcoa.plots <- plot_grid(op.plot + theme(legend.position = "none"),
           bal.plot + theme(legend.position = "none"),
+          fecal.plot + theme(legend.position = "none"),
           nrow = 1,
           labels = "AUTO")
 ## Plot pcoa plots and legend
@@ -153,13 +163,18 @@ plot_grid(pcoa.plots,
           rel_widths = c(0.88, 0.12))
 
 # Save plot
-ggsave("plots/bc_pcoa_split.png",
-       dpi = 600,
-       bg = "white",
-       width = 10,
-       height = 4,
-       units = c("in"))
-
+# ggsave("plots/bc_pcoa_split_ellipses.png",
+#        dpi = 600,
+#        bg = "white",
+#        width = 10,
+#        height = 4,
+#        units = c("in"))
+# ggsave("plots/bc_pcoa_split_convex_hulls.png",
+#        dpi = 600,
+#        bg = "white",
+#        width = 10,
+#        height = 4,
+#        units = c("in"))
 
 
 ### PERMANOVA
@@ -184,6 +199,15 @@ bal.permanova
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 
+# BAL Pairwise
+adonis.pair(bal.pcoa[4][[1]], as.factor(bal.pcoa[5][[1]]$Time_Point), 
+            nper = permutations, corr.method = "BH")
+
+# combination SumsOfSqs  MeanSqs   F.Model        R2 P.value P.value.corrected
+# 1     0 <-> 6  0.862562 0.862562  10.42165 0.4267382   4e-04             4e-04
+# 2    0 <-> 36  3.845041 3.845041 374.79133 0.9639910   4e-04             4e-04
+# 3    6 <-> 36  1.528647 1.528647  17.26329 0.5521904   3e-04             4e-04
+
 OP.permanova <- adonis(op.pcoa[4][[1]] ~ Time_Point, data = op.pcoa[5][[1]], 
                         permutations = permutations)
 OP.permanova
@@ -201,6 +225,14 @@ OP.permanova
 #   Total      17   2.30895                 1.000         
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+adonis.pair(op.pcoa[4][[1]], as.factor(op.pcoa[5][[1]]$Time_Point), 
+            nper = permutations, corr.method = "BH")
+
+# combination  SumsOfSqs    MeanSqs   F.Model         R2 P.value P.value.corrected
+# 1     0 <-> 6 0.07274222 0.07274222 0.6457784 0.06694933  0.7024            0.7024
+# 2    0 <-> 36 0.33431143 0.33431143 2.6219132 0.17931396  0.0087            0.0261
+# 3    6 <-> 36 0.19559915 0.19559915 1.4358455 0.13758784  0.1712            0.2568
 
 
 feces.permanova <- adonis(fecal.pcoa[4][[1]] ~ Time_Point, data = fecal.pcoa[5][[1]], 
@@ -220,3 +252,10 @@ feces.permanova
 #   Total      22    4.4596                 1.00000           
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+adonis.pair(fecal.pcoa[4][[1]], as.factor(fecal.pcoa[5][[1]]$Time_Point), 
+            nper = permutations, corr.method = "BH")
+# combination SumsOfSqs   MeanSqs  F.Model         R2 P.value P.value.corrected
+# 1     0 <-> 6 0.2246406 0.2246406 1.321253 0.08623664  0.2121           0.21210
+# 2    0 <-> 36 0.9221754 0.9221754 6.208020 0.32319936  0.0013           0.00390
+# 3    6 <-> 36 0.6203754 0.6203754 3.532139 0.21365286  0.0103           0.01545

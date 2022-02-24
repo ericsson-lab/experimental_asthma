@@ -9,6 +9,8 @@ library(ggtext)
 library(cowplot)
 library(ggrepel)
 library(EnhancedVolcano)
+library(ggthemes)
+library(scales)
 
 
 ## Read in metadata and table
@@ -229,7 +231,7 @@ aldex_out.chronic <- data.frame(x_tt.chronic) %>%
   rownames_to_column(var = "family") %>% 
   left_join(., log2FC.chronic)
 
-write_csv(aldex_out.chronic, file = "data/ALDEx2/h_vs_c_ALDEx2_output.csv")
+#write_csv(aldex_out.chronic, file = "data/ALDEx2/h_vs_c_ALDEx2_output.csv")
 
 
 
@@ -248,15 +250,19 @@ h_vs_c.plot <- EnhancedVolcano(aldex_out.chronic,
                 subtitle = NULL,
                 caption = NULL,
                 axisLabSize = 12,
-                legendPosition = "right",
+                legendPosition = "bottom",
                 legendLabSize = 10,
                 legendLabels = c("NS", 
                                  "Log2 FC", 
                                  "p < 0.05",
                                  "p < 0.05 and Log2 FC"),
+                legendDropLevels = TRUE,
                 labSize = 4,
                 labFace = "bold",
                 colAlpha = 0.9) +
+  scale_fill_brewer(breaks = c("NS", 
+                               "p < 0.05",
+                               "p < 0.05 and Log2 FC")) +
   theme_set(
     theme(axis.text = element_text(color = "black",
                                    face = "bold"),
@@ -264,8 +270,8 @@ h_vs_c.plot <- EnhancedVolcano(aldex_out.chronic,
                                     face = "bold"),
           legend.text = element_text(color = "black",
                                      face = "bold"),
-          legend.text.align	= 0)
-  )
+          legend.text.align	= 0
+  ))
 h_vs_c.plot
 
 ggsave("plots/h_vs_c_aldex2_we.BH_volcano.png",
@@ -283,6 +289,9 @@ sigfc <- log2FC.chronic %>%
 sigfc
 
 
+show_col(gdocs_pal()(3))
+gdocs_pal()(3)
+table.family.filt.chronic
 sig_dif_boxplots <- table.family.filt.chronic %>% 
   rownames_to_column(var = "family") %>% 
   left_join(., sigfc, by = "family") %>% 
@@ -293,15 +302,16 @@ sig_dif_boxplots <- table.family.filt.chronic %>%
                values_to = "count") %>% 
   left_join(., metadata.filt.chronic, by = "sampleid") %>% 
   select(-Sample) %>% 
-  mutate(Time_Point = case_when(Time_Point == 0 ~ "Healthy",
+  mutate(Time_Point = case_when(Time_Point == 0 ~ "Health",
                                 Time_Point == 36 ~ "Chronic")) %>% 
-  ggplot(aes(x = factor(Time_Point, level = c("Healthy", "Chronic")),
+  ggplot(aes(x = factor(Time_Point, level = c("Health", "Chronic")),
              y = count)) +
   geom_boxplot(aes(fill = Time_Point, alpha = 0.5),
                color = "black") +
   geom_dotplot(aes(fill = Time_Point),
                binaxis = 'y',
-               stackdir = "center") +
+               stackdir = "center",
+               color = NA) +
   facet_wrap(~factor(family, levels=c('Pseudomonadaceae',
                                      'Sphingomonadaceae',
                                      'Sphingobacteriaceae',
@@ -313,8 +323,7 @@ sig_dif_boxplots <- table.family.filt.chronic %>%
   
   ylab("Family Feature Count") +
   
-  scale_fill_manual(values = c("red", "green")) +
-  
+  scale_fill_manual(values = c("#dc3912", "#ff9900")) +
   theme_cowplot() +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_text(face = "bold"),
@@ -327,7 +336,9 @@ sig_dif_boxplots <- table.family.filt.chronic %>%
         strip.text = element_text(face = "bold",
                                   color = "black",
                                   size = 9))
+sig_dif_boxplots
 
+show_col(gdocs_pal()(2))
 ggsave("plots/h_vs_c_sig.fam_boxplots.png",
        dpi = 600,
        width = 6,
@@ -336,15 +347,9 @@ ggsave("plots/h_vs_c_sig.fam_boxplots.png",
        bg = "white")  
 
 
-## Plot volcano plot and individual box plots together.
-leg <- get_legend(h_vs_c.plot)
 
-
-h_vs_c_volcano <-plot_grid(h_vs_c.plot + theme_set(theme(legend.position = "none")), 
-                           leg,
-                           rel_widths = c(0.7,0.3))
-
-plot_grid(h_vs_c_volcano, sig_dif_boxplots, 
+plot_grid(h_vs_c.plot,
+          sig_dif_boxplots, 
           nrow = 2,
           ncol = 1,
           rel_heights = c(0.5,0.5))
