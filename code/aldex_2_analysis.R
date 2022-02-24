@@ -270,7 +270,11 @@ h_vs_c.plot <- EnhancedVolcano(aldex_out.chronic,
                                     face = "bold"),
           legend.text = element_text(color = "black",
                                      face = "bold"),
-          legend.text.align	= 0
+          legend.text.align	= 0,
+          legend.position = "none",
+          
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank()
   ))
 h_vs_c.plot
 
