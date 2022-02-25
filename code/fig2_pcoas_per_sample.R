@@ -104,12 +104,12 @@ plot_pcoa <- function(pcoa_object, color) {
              color = as.factor(Time_Point))) +
   
   # Plots hulls for samples grouped by time
-  # geom_polygon(data = pcoa_object[[2]],
-  #              aes(fill = as.factor(Time_Point),
-  #                  color = as.factor(Time_Point)),
-  #              alpha = 0.1,
-  #              show.legend = FALSE) +
-   stat_ellipse(show.legend = F) +
+  geom_polygon(data = pcoa_object[[2]],
+               aes(fill = as.factor(Time_Point),
+                   color = as.factor(Time_Point)),
+               alpha = 0.1,
+               show.legend = FALSE) +
+   # stat_ellipse(show.legend = F) +
   
   # Plot points for each sample above convex hull
   geom_point(aes(shape = as.factor(Time_Point)),alpha = 0.9,
@@ -152,11 +152,11 @@ op.plot <- plot_pcoa(op.pcoa, 3)
 leg <- get_legend(bal.plot + guides(shape = guide_legend(override.aes = list(color = "black",
                                                                              stroke = 1.05)) ))
 ## Plot pcoas together without legends.
-pcoa.plots <- plot_grid(op.plot + theme(legend.position = "none"),
-          bal.plot + theme(legend.position = "none"),
-          fecal.plot + theme(legend.position = "none"),
-          nrow = 1,
-          labels = "AUTO")
+pcoa.plots <- plot_grid(fecal.plot + theme(legend.position = "none"),
+                        op.plot + theme(legend.position = "none"),
+                        bal.plot + theme(legend.position = "none"),
+                        nrow = 1,
+                        labels = "AUTO")
 ## Plot pcoa plots and legend
 plot_grid(pcoa.plots, 
           leg, 

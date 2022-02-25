@@ -90,13 +90,13 @@ pcoa.vectors.metadata %>%
   ggplot(aes(x = bc_PCo1, y = bc_PCo2,
              color = Sample)) +
   
-  # geom_polygon(data = bc_hull,
-  #              aes(fill = Sample,
-  #                  color = Sample),
-  #              alpha = 0.1,
-  #              show.legend = FALSE) +
+  geom_polygon(data = bc_hull,
+               aes(fill = Sample,
+                   color = Sample),
+               alpha = 0.1,
+               show.legend = FALSE) +
 
-   stat_ellipse(show.legend = F) +
+   # stat_ellipse(show.legend = F) +
   geom_point(aes(shape = as.factor(Time_Point)),
              alpha = 0.9,
              size = 3) +
@@ -107,12 +107,12 @@ pcoa.vectors.metadata %>%
   scale_shape_manual(values=c(0,1,2), labels = c("Health",
                                                  "Acute",
                                                  "Chronic"))+
-  scale_color_manual(values=c("#ff9900", "#3366cc", "#dc3912"), 
-                     breaks = c("OP", "BALF", "Rectal"),
-                     labels = c("OP", "BALF", "Rectal")) +
-  scale_fill_manual(values=c("#ff9900", "#3366cc", "#dc3912"), 
-                    breaks = c("OP", "BALF", "Rectal"),
-                    labels = c("OP", "BALF", "Rectal")) +
+  scale_color_manual(values=c("#dc3912","#ff9900", "#3366cc"), 
+                     breaks = c("Rectal", "OP", "BALF"),
+                     labels = c("Rectal", "OP", "BALF")) +
+  scale_fill_manual(values=c("#dc3912","#ff9900", "#3366cc"), 
+                    breaks = c("Rectal", "OP", "BALF"),
+                    labels = c("Rectal", "OP", "BALF")) +
   
   theme_cowplot() +
   
@@ -127,18 +127,18 @@ pcoa.vectors.metadata %>%
          color = guide_legend(override.aes = list(size = 4.5,
                                                   shape = 15)))
 
-# ggsave("plots/bc_pcoa_all_sample_types_convex_hulls.png",
-#        dpi = 600,
-#        bg = "white",
-#        width = 6,
-#        height = 4,
-#        units = c("in"))
-ggsave("plots/bc_pcoa_all_sample_types_ellipses.png",
+ggsave("plots/bc_pcoa_all_sample_types_convex_hulls.png",
        dpi = 600,
        bg = "white",
        width = 6,
        height = 4,
        units = c("in"))
+# ggsave("plots/bc_pcoa_all_sample_types_ellipses.png",
+#        dpi = 600,
+#        bg = "white",
+#        width = 6,
+#        height = 4,
+#        units = c("in"))
 metadata.filtered
 adonis.all.sample <- adonis(bc_dist ~ Time_Point * Sample, 
        permutations = permutations, data = metadata.filtered)

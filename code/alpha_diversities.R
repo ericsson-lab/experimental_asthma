@@ -116,7 +116,7 @@ alpha_metrics %>%
   scale_color_manual(values = gdocs_pal()(3)) +
   #ylim(c(0,115)) +
   facet_grid_sc(rows = vars(alpha_metric),
-                cols = vars(factor(Sample, levels = c("OP", "BALF", "Rectal"))),
+                cols = vars(factor(Sample, levels = c("Rectal","OP", "BALF"))),
                 scales = list(y = scales_y), 
                 switch = 'y') +
 
@@ -141,11 +141,11 @@ alpha_metrics %>%
         #strip.text = element_blank()
         )
 
-
+# 
 # ggsave("plots/richness.png",
 #               dpi = 600,
 #               width = 6,
-#               height = 4,
+#               height = 6,
 #               units = c("in"))
 
 # ggsave("plots/alpha_diversity_labs.png",
